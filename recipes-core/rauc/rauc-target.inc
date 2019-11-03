@@ -45,8 +45,8 @@ do_install () {
 
 PACKAGES =+ "${PN}-mark-good"
 
-RDEPENDS_${PN} += "${@"dt-utils-barebox-state" if "barebox" in d.getVar("PREFERRED_PROVIDER_virtual/bootloader") else ""}"
-RDEPENDS_${PN} += "${@"u-boot-fw-utils" if "u-boot" in d.getVar("PREFERRED_PROVIDER_virtual/bootloader") else ""}"
+RDEPENDS_${PN} += "${@"dt-utils-barebox-state" if "barebox" in (d.getVar("PREFERRED_PROVIDER_virtual/bootloader") or "") else ""}"
+RDEPENDS_${PN} += "${@"u-boot-fw-utils" if "u-boot" in (d.getVar("PREFERRED_PROVIDER_virtual/bootloader") or "") else ""}"
 
 RRECOMMENDS_${PN}_append = " ${PN}-mark-good"
 
