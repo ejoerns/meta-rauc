@@ -5,6 +5,8 @@ jobs:
     docker:
       - image: crops/yocto:ubuntu-19.04-builder
         environment:
+          YOCTO_BRANCH: master
+          YOCTO_VERSION: "3.1"
           LC_ALL: en_US.UTF-8
           LANG: en_US.UTF-8
           LANGUAGE: en_US.UTF-8
@@ -18,10 +20,10 @@ jobs:
             - sstate-test-
       - run:
           name: Clone poky
-          command: git clone git://git.yoctoproject.org/poky
+          command: git clone -b ${YOCTO_BRANCH} git://git.yoctoproject.org/poky
       - run:
           name: Clone meta-oe
-          command: git clone https://github.com/openembedded/meta-openembedded.git meta-oe
+          command: git clone -b ${YOCTO_BRANCH} https://github.com/openembedded/meta-openembedded.git meta-oe
       - run:
           name: Link meta-rauc
           command: ln -sf . meta-rauc
@@ -30,7 +32,7 @@ jobs:
           command: mkdir -p meta-this/conf/ && cp .circleci/*.sample meta-this/conf/.
       - run:
           name: Initialize build directory
-          command: TEMPLATECONF=../meta-this/conf source poky/oe-init-build-env build
+          command: TEMPLATECONF=../meta-this/conf source poky/oe-init-build-env build && sed -i s/YOCTO_VERSION/${YOCTO_VERSION}/g conf/local.conf && cat conf/local.conf
       - run:
           name: Build rauc
           command: source poky/oe-init-build-env build && bitbake rauc
