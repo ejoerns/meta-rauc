@@ -22,3 +22,5 @@ SSTATE_MIRRORS = "\
 file://.* http://sstate.yoctoproject.org/dev/PATH;downloadfilename=PATH \n \
 file://.* http://sstate.yoctoproject.org/YOCTO_VERSION/PATH;downloadfilename=PATH \n \
 "
+
+INHERIT += "rm_work"
