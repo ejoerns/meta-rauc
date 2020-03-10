@@ -33,6 +33,10 @@
 #   RAUC_SLOT_dtb[type] ?= "file"
 #   RAUC_SLOT_dtb[file] ?= "${MACHINE}-variant1.dtb"
 #
+# To override the file name used in the bundle use 'rename'
+#   RAUC_SLOT_rootfs ?= "core-image-minimal"
+#   RAUC_SLOT_rootfs[rename] ?= "rootfs.ext4"
+#
 # To add additional artifacts to the bundle you can use RAUC_BUNDLE_EXTRA_FILES
 # and RAUC_BUNDLE_EXTRA_DEPENDS.
 # For files from the WORKDIR (fetched using SRC_URI) you can write:
@@ -204,6 +208,9 @@ def write_manifest(d):
         else:
             raise bb.build.FuncFailed('Unknown image type: %s' % imgtype)
 
+        if slotflags and 'rename' in slotflags:
+            imgname = slotflags.get('rename')
+
         manifest.write("filename=%s\n" % imgname)
         if slotflags and 'hooks' in slotflags:
             manifest.write("hooks=%s\n" % slotflags.get('hooks'))
@@ -290,7 +297,7 @@ inherit deploy
 
 do_deploy() {
 	install -d ${DEPLOYDIR}
-	install ${B}/bundle.raucb ${DEPLOYDIR}/${BUNDLE_NAME}${BUNDLE_EXTENSION}
+	install -m 0644 ${B}/bundle.raucb ${DEPLOYDIR}/${BUNDLE_NAME}${BUNDLE_EXTENSION}
 	ln -sf ${BUNDLE_NAME}${BUNDLE_EXTENSION} ${DEPLOYDIR}/${BUNDLE_LINK_NAME}${BUNDLE_EXTENSION}
 }
 
