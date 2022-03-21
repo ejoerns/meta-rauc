@@ -118,8 +118,11 @@ RAUC_BUNDLE_EXTRA_DEPENDS[doc] = "Specifies list of recipes that create artifact
 
 RAUC_CASYNC_BUNDLE ??= "0"
 
+RAUC_ENCRYPT_BUNDLE ??= "0"
+RAUC_ENCRYPT_BUNDLE[doc] = "Set to \"1\" to enable CMS encryption of RAUC crypt Bundles. If encryption should happen separately, choose \"0\" here."
+
 RAUC_BUNDLE_FORMAT ??= ""
-RAUC_BUNDLE_FORMAT[doc] = "Specifies the bundle format to be used (plain/verity)."
+RAUC_BUNDLE_FORMAT[doc] = "Specifies the bundle format to be used (plain/verity/crypt)."
 
 # Create dependency list from images
 python __anonymous() {
@@ -377,6 +380,12 @@ CASYNC_BUNDLE_LINK_NAME ??= "${CASYNC_BUNDLE_BASENAME}-${MACHINE}"
 CASYNC_BUNDLE_EXTENSION ??= "${BUNDLE_EXTENSION}"
 CASYNC_BUNDLE_EXTENSION[doc] = "Specifies desired custom filename extension of generated RAUC casync bundle."
 
+python __anonymous() {
+    recipients = d.getVar('RAUC_ENCRYPT_RECIPIENTS')
+    if recipients:
+        d.setVar('RAUC_ENCRYPT_RECIPIENTS_ARGS', ' '.join("--to=%s" % x for x in recipients.split()))
+}
+
 do_bundle() {
 	if [ -z "${RAUC_KEY_FILE}" ]; then
 		bbfatal "'RAUC_KEY_FILE' not set. Please set to a valid key file location."
@@ -414,6 +423,18 @@ do_bundle() {
 			${B}/bundle.raucb \
 			${B}/casync-bundle.raucb
 	fi
+
+	if [ ${RAUC_ENCRYPT_BUNDLE} -eq 1 ]; then
+		if [ -z "${RAUC_ENCRYPT_RECIPIENTS}" ]; then
+			bbfatal "'RAUC_ENCRYPT_RECIPIENTS' not set. Please set a valid recipients file(s) location(s)."
+		fi
+		${STAGING_DIR_NATIVE}${bindir}/rauc encrypt \
+		--debug \
+                ${RAUC_ENCRYPT_RECIPIENTS_ARGS} \
+		--keyring=${RAUC_KEYRING_FILE} \
+		${B}/bundle.raucb \
+		${B}/encrypted-bundle.raucb
+        fi
 }
 do_bundle[dirs] = "${B}"
 do_bundle[cleandirs] = "${B}"
@@ -433,6 +454,11 @@ do_deploy() {
 		ln -sf ${CASYNC_BUNDLE_NAME}${CASYNC_BUNDLE_EXTENSION} ${DEPLOYDIR}/${CASYNC_BUNDLE_LINK_NAME}${CASYNC_BUNDLE_EXTENSION}
 		ln -sf ${CASYNC_BUNDLE_NAME}.castr ${DEPLOYDIR}/${CASYNC_BUNDLE_LINK_NAME}.castr
 	fi
+
+	if [ ${RAUC_ENCRYPT_BUNDLE} -eq 1 ]; then
+		install ${B}/encrypted-bundle.raucb ${DEPLOYDIR}/encrypted-${BUNDLE_NAME}${BUNDLE_EXTENSION}
+		ln -sf encrypted-${BUNDLE_NAME}${BUNDLE_EXTENSION} ${DEPLOYDIR}/encrypted-${BUNDLE_LINK_NAME}${BUNDLE_EXTENSION}
+        fi
 }
 
 addtask deploy after do_bundle before do_build
